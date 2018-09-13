@@ -1,16 +1,13 @@
 filebeat.config:
 
-filebeat.inputs:
+filebeat.prospectors:
 - type: log
   paths:
-  - ./sampling.log
+    - /tests/load/logs/sampling.log
 
 processors:
   - fake_k8s_annotations:
-  - add_host_metadata:
   - drop_sampling:
-      sampling:
-        pct: 0.20
 
 output.console:
   bulk_max_size: 1
