@@ -48,9 +48,11 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 
 	if threshold, ok := d.accept(pct); ok {
 		logp.Debug("drop_sampling", "allowed: %f, rate: %f", threshold, pct)
+		logp.Info("allowing log")
 		return b, nil
 	} else {
 		logp.Debug("drop_sampling", "skipped: %f, rate: %f", threshold, pct)
+		logp.Info("skipping log")
 		return nil, nil
 	}
 }
