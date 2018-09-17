@@ -85,7 +85,7 @@ func (f *Flog) log(msg string) {
 	f.messages <- msg
 }
 
-// logf is much like printf, but sent to log.
-func (f *Flog) logf(format string, a ...interface{}) {
-	f.messages <- fmt.Sprintln(fmt.Sprintf(format, a...))
+// logf accepts log lines with formating like Sprintf.
+func (f *Flog) logf(format string, args ...interface{}) {
+	f.messages <- fmt.Sprintln(fmt.Sprintf(format, args...))
 }

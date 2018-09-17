@@ -39,8 +39,8 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
 
-  templog := "/tmp/filebeat.log"
-  logp.Info(fmt.Sprintf("creating new temp log: %s", "/tmp/filebeat.log"))
+	templog := "/tmp/filebeat.log"
+	logp.Info(fmt.Sprintf("creating new temp log: %s", "/tmp/filebeat.log"))
 	log, err := NewFlog(templog)
 	if err != nil {
 		panic(err)
@@ -60,7 +60,7 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 		return b, nil
 	}
 
-	threshold, ok := d.accept(pct)
+	_, ok = d.accept(pct)
 
 	if ok {
 		d.allowed.Inc()
@@ -68,23 +68,22 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 		d.skipped.Inc()
 	}
 
+	if ok {
+		//d.log.logf("allowed: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
+		return b, nil
+	} else {
+		//d.log.logf("skipped: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
+		return nil, nil
+	}
+}
+
+func (d *dropSampling) samplePct() float64 {
 	skipped := d.skipped.Load()
 	allowed := d.allowed.Load()
 	total := skipped + allowed
 
 	samplePct := float64(allowed) / float64(total)
-
-	if threshold > .50 {
-		d.logEvent(b)
-	}
-
-	if ok {
-		d.log.logf("allowed: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
-		return b, nil
-	} else {
-		d.log.logf("skipped: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
-		return nil, nil
-	}
+	return samplePct
 }
 
 func (d *dropSampling) logEvent(b *beat.Event) {
