@@ -1,10 +1,10 @@
 package actions
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"fmt"
 )
 
 // Logger represents some form of message recipient that is responsible
@@ -18,8 +18,8 @@ type Logger interface {
 // closing the log file in response to sigint and sigterm.
 type Flog struct {
 	filename string
-	file *os.File
-	closed bool
+	file     *os.File
+	closed   bool
 	messages chan string
 	closeSig chan os.Signal
 }
@@ -30,14 +30,14 @@ type Flog struct {
 //
 // The Logger will close the file in response to an sigint or a sigterm.
 func NewFlog(filename string) (*Flog, error) {
-	file, err := os.OpenFile(filename, os.O_APPEND | os.O_WRONLY | os.O_CREATE, 0644)
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return nil, err
 	}
 
 	logger := &Flog{
 		filename: filename,
-		file: file,
+		file:     file,
 		messages: make(chan string, 10),
 		closeSig: make(chan os.Signal, 1),
 	}
@@ -64,10 +64,14 @@ func (f *Flog) run() {
 			fmt.Println("closing the Logger")
 			running = false
 
-		case msg := <- f.messages:
-			_, err := f.file.Write([]byte(msg))
-			if err != nil {
-				fmt.Println(err.Error())
+		case msg := <-f.messages:
+			if f.file != nil {
+				_, err := f.file.Write([]byte(msg))
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+			} else {
+				fmt.Println("couldn't log to temp log")
 			}
 		}
 	}
