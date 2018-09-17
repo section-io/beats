@@ -5,18 +5,19 @@ import (
 	"strconv"
 	"time"
 
+	"encoding/json"
+
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/common/atomic"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/processors"
-	"github.com/elastic/beats/libbeat/common/atomic"
-	"encoding/json"
 )
 
 type dropSampling struct {
-	rnd  *rand.Rand
-	seed int64
-	log *Flog
+	rnd     *rand.Rand
+	seed    int64
+	log     *Flog
 	skipped atomic.Uint64
 	allowed atomic.Uint64
 }
@@ -37,7 +38,7 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
 
-	log, err := NewFlog("/usr/share/filebeat/data")
+	log, err := NewFlog("/tmp/filebeat.log")
 	if err != nil {
 		panic(err)
 	}
