@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -38,7 +39,9 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
 
-	log, err := NewFlog("/tmp/filebeat.log")
+  templog := "/tmp/filebeat.log"
+  logp.Info(fmt.Sprintf("creating new temp log: %s", "/tmp/filebeat.log"))
+	log, err := NewFlog(templog)
 	if err != nil {
 		panic(err)
 	}
