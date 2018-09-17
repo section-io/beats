@@ -37,7 +37,7 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
 
-	log, err := NewFlog("/tests/load/logs/flog.log")
+	log, err := NewFlog("/usr/share/filebeat/data")
 	if err != nil {
 		panic(err)
 	}
