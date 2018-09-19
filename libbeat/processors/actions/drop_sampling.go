@@ -1,26 +1,27 @@
 package actions
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
-
-	"encoding/json"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/elastic/beats/libbeat/common/atomic"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/processors"
 )
 
 type dropSampling struct {
-	rnd     *rand.Rand
-	seed    int64
-	log     *Flog
-	skipped atomic.Uint64
-	allowed atomic.Uint64
+	rnd           *rand.Rand
+	seed          int64
+	lock          *sync.Mutex
+	skipped       uint64
+	allowed       uint64
+	rate          float64
+	threshold     float64
+	statsLogginOn bool
+	metrics       *PeriodicSamplingMetrics
 }
 
 func init() {
@@ -39,60 +40,55 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
 
-	templog := "/tmp/filebeat.log"
-	logp.Info(fmt.Sprintf("creating new temp log: %s", "/tmp/filebeat.log"))
-	log, err := NewFlog(templog)
-	if err != nil {
-		panic(err)
+	ds := &dropSampling{
+		rnd:           rnd,
+		statsLogginOn: true,
+		lock:          &sync.Mutex{},
+		metrics:       StartPeriodicMetrics(),
 	}
 
-	ds := &dropSampling{
-		rnd: rnd,
-		log: log,
-	}
+	go ds.metrics.run(ds.provideMetrics)
 
 	return ds, nil
 }
 
 func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
-	pct, ok := d.findSampling(b)
+	rate, ok := d.findSampling(b)
 	if !ok {
 		return b, nil
 	}
 
-	_, ok = d.accept(pct)
+	threshold, ok := d.accept(rate)
+
+	d.trackMetrics(ok, rate, threshold)
 
 	if ok {
-		d.allowed.Inc()
-	} else {
-		d.skipped.Inc()
-	}
-
-	if ok {
-		//d.log.logf("allowed: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
 		return b, nil
-	} else {
-		//d.log.logf("skipped: %f, rate: %f, sample pct: %f", threshold, pct, samplePct)
-		return nil, nil
 	}
+
+	return nil, nil
 }
 
-func (d *dropSampling) samplePct() float64 {
-	skipped := d.skipped.Load()
-	allowed := d.allowed.Load()
-	total := skipped + allowed
-
-	samplePct := float64(allowed) / float64(total)
-	return samplePct
+func (d *dropSampling) trackMetrics(ok bool, rate, threshold float64) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	if ok {
+		d.allowed++
+	} else {
+		d.skipped++
+	}
+	d.rate = rate
+	d.threshold = threshold
 }
 
-func (d *dropSampling) logEvent(b *beat.Event) {
-	bin, err := json.MarshalIndent(b, "", "  ")
-	if err != nil {
-		d.log.log(err.Error())
-	} else {
-		d.log.log(string(bin))
-	}
+func (d *dropSampling) provideMetrics() (allowed, skipped uint64, rate, threshold float64) {
+	d.lock.Lock()
+	allowed = d.allowed
+	skipped = d.skipped
+	rate = d.rate
+	threshold = d.threshold
+	d.lock.Unlock()
+	return
 }
 
 func (d *dropSampling) findSampling(b *beat.Event) (float64, bool) {
