@@ -15,7 +15,7 @@ import (
 type dropSampling struct {
 	rnd       *rand.Rand
 	seed      int64
-	lock      *sync.Mutex
+	lock      *sync.Mutex	
 	skipped   uint64
 	allowed   uint64
 	rate      float64
@@ -41,7 +41,6 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 
 	ds := &dropSampling{
 		rnd:           rnd,
-		statsLogginOn: true,
 		lock:          &sync.Mutex{},
 		metrics:       StartPeriodicMetrics(),
 	}
