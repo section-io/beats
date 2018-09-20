@@ -3,24 +3,21 @@ package actions
 import (
 	"math/rand"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/common/atomic"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/processors"
 )
 
 type dropSampling struct {
-	rnd       *rand.Rand
-	seed      int64
-	lock      *sync.Mutex	
-	skipped   uint64
-	allowed   uint64
-	rate      float64
-	threshold float64
-	metrics   *PeriodicSamplingMetrics
+	rnd     *rand.Rand
+	seed    int64
+	skipped *atomic.Int64
+	allowed *atomic.Int64
+	metrics *PeriodicSamplingMetrics
 }
 
 func init() {
@@ -40,9 +37,10 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	rnd := rand.New(src)
 
 	ds := &dropSampling{
-		rnd:           rnd,
-		lock:          &sync.Mutex{},
-		metrics:       StartPeriodicMetrics(),
+		rnd:     rnd,
+		skipped: &atomic.Int64{},
+		allowed: &atomic.Int64{},
+		metrics: StartPeriodicMetrics(),
 	}
 
 	go ds.metrics.run(ds.provideMetrics)
@@ -56,9 +54,13 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 		return b, nil
 	}
 
-	threshold, ok := d.accept(rate)
+	_, ok = d.accept(rate)
 
-	d.trackMetrics(ok, rate, threshold)
+	if ok {
+		d.allowed.Inc()
+	} else {
+		d.skipped.Inc()
+	}
 
 	if ok {
 		return b, nil
@@ -67,26 +69,8 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 	return nil, nil
 }
 
-func (d *dropSampling) trackMetrics(ok bool, rate, threshold float64) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-	if ok {
-		d.allowed++
-	} else {
-		d.skipped++
-	}
-	d.rate = rate
-	d.threshold = threshold
-}
-
-func (d *dropSampling) provideMetrics() (allowed, skipped uint64, rate, threshold float64) {
-	d.lock.Lock()
-	allowed = d.allowed
-	skipped = d.skipped
-	rate = d.rate
-	threshold = d.threshold
-	d.lock.Unlock()
-	return
+func (d *dropSampling) provideMetrics() (allowed, skipped int64) {
+	return d.allowed.Load(), d.skipped.Load()
 }
 
 func (d *dropSampling) findSampling(b *beat.Event) (float64, bool) {

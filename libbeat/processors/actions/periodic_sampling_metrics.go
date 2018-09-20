@@ -20,7 +20,7 @@ type PeriodicSamplingMetrics struct {
 
 // MetricsProvider surfaces the number of events skipped and allowed, while
 // additionally providing the most recently seen threshold and rate.
-type MetricsProvider func() (allowed, skipped uint64, rate, threshold float64)
+type MetricsProvider func() (allowed, skipped int64)
 
 // StartPeriodicMetrics starts outputing to log metrics gathered via
 // the MetricsProvider given to run().
@@ -58,19 +58,22 @@ func (p *PeriodicSamplingMetrics) run(provider MetricsProvider) {
 			running = false
 
 		case <-tic.C:
-			allowed, skipped, rate, threshold := provider()
+			allowed, skipped := provider()
 			samplePct := p.samplePct(allowed, skipped)
 			logp.Info(fmt.Sprintf(
-				"allowed: %d, skipped: %d, rate: %f, threshold: %f, sampled pct: %f",
-				allowed, skipped, rate, threshold, samplePct))
+				"allowed: %d, skipped: %d, sampled pct: %f",
+				allowed, skipped, samplePct))
 		}
 	}
 
 	logp.Info("terminating period sampling metrics")
 }
 
-func (p *PeriodicSamplingMetrics) samplePct(allowed, skipped uint64) float64 {
+func (p *PeriodicSamplingMetrics) samplePct(allowed, skipped int64) float64 {
 	total := skipped + allowed
+	if total == 0 {
+		return 0.0 // avoid divide by zero
+	}
 	samplePct := float64(allowed) / float64(total)
 	return samplePct
 }
