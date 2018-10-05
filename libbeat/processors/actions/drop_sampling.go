@@ -21,6 +21,7 @@ type dropSampling struct {
 }
 
 func init() {
+	logp.Info("registering drop_sampling")
 	processors.RegisterPlugin("drop_sampling", newDropSample)
 }
 
