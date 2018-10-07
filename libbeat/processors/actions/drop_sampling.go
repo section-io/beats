@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -21,7 +22,7 @@ type dropSampling struct {
 }
 
 func init() {
-	logp.Info("registering drop_sampling")
+	fmt.Println("starting section.io-filebeat-v6.2.3-k3")
 	processors.RegisterPlugin("drop_sampling", newDropSample)
 }
 
