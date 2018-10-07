@@ -58,10 +58,10 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 	rate, ok := d.findSampling(b)
 	if !ok {
-		d.annotated.Inc()
+		d.unannotated.Inc()
 		return b, nil
 	} else {
-		d.unannotated.Inc()
+		d.annotated.Inc()
 	}
 
 	_, ok = d.accept(rate)

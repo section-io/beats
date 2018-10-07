@@ -60,7 +60,7 @@ func (p *PeriodicSamplingMetrics) run(provider MetricsProvider) {
 			allowed, skipped, annotated, unannotated := provider()
 			samplePct := p.samplePct(allowed, skipped)
 			logp.Info(fmt.Sprintf(
-				"allowed: %d, skipped: %d, inspected: %d, unannotated: %d, sampled pct: %f",
+				"allowed: %d, skipped: %d, annotated: %d, unannotated: %d, sampled pct: %f",
 				allowed, skipped, annotated, unannotated, samplePct))
 		}
 	}
