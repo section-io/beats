@@ -18,9 +18,8 @@ type PeriodicSamplingMetrics struct {
 	closeSig chan os.Signal
 }
 
-// MetricsProvider surfaces the number of events skipped and allowed, while
-// additionally providing the most recently seen threshold and rate.
-type MetricsProvider func() (allowed, skipped int64)
+// MetricsProvider surfaces the number of events skipped and allowed, etc.
+type MetricsProvider func() (allowed, skipped, annotated, unannotated int64)
 
 // StartPeriodicMetrics starts outputing to log metrics gathered via
 // the MetricsProvider given to run().
@@ -58,11 +57,11 @@ func (p *PeriodicSamplingMetrics) run(provider MetricsProvider) {
 			running = false
 
 		case <-tic.C:
-			allowed, skipped := provider()
+			allowed, skipped, annotated, unannotated := provider()
 			samplePct := p.samplePct(allowed, skipped)
 			logp.Info(fmt.Sprintf(
-				"allowed: %d, skipped: %d, sampled pct: %f",
-				allowed, skipped, samplePct))
+				"allowed: %d, skipped: %d, inspected: %d, unannotated: %d, sampled pct: %f",
+				allowed, skipped, annotated, unannotated, samplePct))
 		}
 	}
 

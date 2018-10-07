@@ -14,11 +14,13 @@ import (
 )
 
 type dropSampling struct {
-	rnd     *rand.Rand
-	seed    int64
-	skipped *atomic.Int64
-	allowed *atomic.Int64
-	metrics *PeriodicSamplingMetrics
+	rnd         *rand.Rand
+	seed        int64
+	annotated   *atomic.Int64
+	unannotated *atomic.Int64
+	skipped     *atomic.Int64
+	allowed     *atomic.Int64
+	metrics     *PeriodicSamplingMetrics
 }
 
 func init() {
@@ -40,10 +42,12 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 	rnd := rand.New(src)
 
 	ds := &dropSampling{
-		rnd:     rnd,
-		skipped: &atomic.Int64{},
-		allowed: &atomic.Int64{},
-		metrics: StartPeriodicMetrics(),
+		rnd:         rnd,
+		skipped:     &atomic.Int64{},
+		allowed:     &atomic.Int64{},
+		annotated:   &atomic.Int64{},
+		unannotated: &atomic.Int64{},
+		metrics:     StartPeriodicMetrics(),
 	}
 
 	go ds.metrics.run(ds.provideMetrics)
@@ -54,7 +58,10 @@ func newDropSample(c *common.Config) (processors.Processor, error) {
 func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 	rate, ok := d.findSampling(b)
 	if !ok {
+		d.annotated.Inc()
 		return b, nil
+	} else {
+		d.unannotated.Inc()
 	}
 
 	_, ok = d.accept(rate)
@@ -72,8 +79,8 @@ func (d *dropSampling) Run(b *beat.Event) (*beat.Event, error) {
 	return nil, nil
 }
 
-func (d *dropSampling) provideMetrics() (allowed, skipped int64) {
-	return d.allowed.Load(), d.skipped.Load()
+func (d *dropSampling) provideMetrics() (allowed, skipped, annotated, unannotated int64) {
+	return d.allowed.Load(), d.skipped.Load(), d.annotated.Load(), d.unannotated.Load()
 }
 
 func (d *dropSampling) findSampling(b *beat.Event) (float64, bool) {
