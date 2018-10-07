@@ -22,7 +22,7 @@ type dropSampling struct {
 }
 
 func init() {
-	fmt.Println("starting section.io-filebeat-v6.2.3-k3")
+	fmt.Println("registering drop_sampling for section.io-filebeat-v6.2.3-k3")
 	processors.RegisterPlugin("drop_sampling", newDropSample)
 }
 
@@ -34,6 +34,7 @@ func (d *dropSampling) accept(rate float64) (float64, bool) {
 }
 
 func newDropSample(c *common.Config) (processors.Processor, error) {
+	logp.Info("creating new drop_sampling processor")
 	seed := time.Now().UnixNano() // turn into something set by config
 	src := rand.NewSource(seed)
 	rnd := rand.New(src)
