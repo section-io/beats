@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/elastic/beats/filebeat/cmd"
@@ -15,6 +16,7 @@ import (
 // Finally, prospector uses the registrar information, on restart, to
 // determine where in each file to restart a harvester.
 func main() {
+	fmt.Println("starting section.io-filebeat-v6.2.3-k3")
 	if err := cmd.RootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
