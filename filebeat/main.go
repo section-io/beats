@@ -16,7 +16,7 @@ import (
 // Finally, prospector uses the registrar information, on restart, to
 // determine where in each file to restart a harvester.
 func main() {
-	fmt.Println("starting section.io-filebeat-v6.2.3-k3")
+	fmt.Println("starting with sampling")
 	if err := cmd.RootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

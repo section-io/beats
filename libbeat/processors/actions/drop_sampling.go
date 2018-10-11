@@ -24,7 +24,7 @@ type dropSampling struct {
 }
 
 func init() {
-	fmt.Println("registering drop_sampling for section.io-filebeat-v6.2.3-k3")
+	fmt.Println("registering drop_sampling")
 	processors.RegisterPlugin("drop_sampling", newDropSample)
 }
 
@@ -108,9 +108,9 @@ func (d *dropSampling) findSampling(b *beat.Event) (float64, bool) {
 		return 0.0, false
 	}
 
-	iface, ok = anno["section.io/sampling"]
+	iface, ok = anno["sampling"]
 	if !ok {
-		logp.Debug("drop_sampling", "couldn't find section.io/sampling")
+		logp.Debug("drop_sampling", "couldn't find sampling")
 		return 0.0, false
 	}
 

@@ -24,17 +24,17 @@ const fakeAnno = `{
 	"pod": {
 		"name": "egress-7cf977b78c-76rzl"
 	},
-	"namespace": "section-env805-production-8d4b7edebbc0b",
+	"namespace": "example-env805-production-8d4b7edebbc0b",
 	"annotations": {
-		"section.io/egress-version": "beta-1.0.4",
-		"section.io/log-stack": "acc380-app430-env805",
-		"section.io/log-handler": "egress",
-		"section.io/proxy-template": "egress",
-		"section.io/sampling": "0.22"
+		"example/egress-version": "beta-1.0.4",
+		"example/log-stack": "acc380-app430-env805",
+		"example/log-handler": "egress",
+		"example/proxy-template": "egress",
+		"sampling": "0.22"
 	},
 	"labels": {
 		"app": "egress",
-		"section.io/proxy-name": "egress",
+		"example/proxy-name": "egress",
 		"pod-template-hash": "3795336347"
 	}
 }`

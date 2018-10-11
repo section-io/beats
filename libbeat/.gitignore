@@ -24,7 +24,6 @@ _testmain.go
 # IDE / OS specific files
 .idea
 .jenkins
-.vscode
 
 /libbeat.yml
 /libbeat.reference.yml
