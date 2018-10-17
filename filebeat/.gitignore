@@ -3,6 +3,7 @@
 /docs/html_docs
 
 filebeat
+filebeat.exe
 
 build
 _meta/kibana
