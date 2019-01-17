@@ -49,7 +49,7 @@ func newFakeK8sAnnotations(c *common.Config) (processors.Processor, error) {
 	}
 	err := json.Unmarshal([]byte(fakeAnno), &fake.anno)
 	if err != nil {
-		logp.Info("couldn't Unmarshall fake annotation")
+		logp.Info("couldn't unmarshall fake annotation")
 	}
 	return fake, nil
 }
