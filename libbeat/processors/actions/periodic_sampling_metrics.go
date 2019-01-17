@@ -60,7 +60,7 @@ func (p *PeriodicSamplingMetrics) run(provider MetricsProvider) {
 			allowed, skipped, annotated, unannotated := provider()
 			samplePct := p.samplePct(allowed, skipped)
 			logp.Info(fmt.Sprintf(
-				"allowed: %d, skipped: %d, annotated: %d, unannotated: %d, sampled pct: %f",
+				"allowed: %d, skipped: %d, annotated: %d, unannotated: %d, sampled pct (ignores unannotated): %.2f",
 				allowed, skipped, annotated, unannotated, samplePct))
 		}
 	}
@@ -73,6 +73,6 @@ func (p *PeriodicSamplingMetrics) samplePct(allowed, skipped int64) float64 {
 	if total == 0 {
 		return 0.0 // avoid divide by zero
 	}
-	samplePct := float64(allowed) / float64(total)
+	samplePct := 100.0 * float64(allowed) / float64(total)
 	return samplePct
 }
